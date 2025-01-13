@@ -4,12 +4,10 @@ import sys
 
 # Inisialisasi Pygame
 pygame.init()
-pygame.mixer.init()  # Inisialisasi mixer untuk suara
 
 # Konstanta
-WIDTH, HEIGHT = 1500, 720
+WIDTH, HEIGHT = 400, 600
 WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
 FPS = 60
 GRAVITY = 0.5
 FLAP_STRENGTH = -10
@@ -18,46 +16,47 @@ FLAP_STRENGTH = -10
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Burung Terbang")
 
-background_image = pygame.image.load("bg.jpg")  # Ganti dengan nama file latar belakang Anda
-background_image = pygame.transform.scale(background_image, (WIDTH, HEIGHT))  # Ubah ukuran gambar
+# Inisialisasi suara
+flap_sound = pygame.mixer.Sound("flappy_whoosh-43099.mp3")
+game_over_sound = pygame.mixer.Sound("resources/game_over.wav")
 
-# Muat suara
-jump_sound = pygame.mixer.Sound("lompat.mp3")  # Suara ketika melompat
-nabrak_sound = pygame.mixer.Sound("nabrak.wav")  # Suara ketika nabrak
-die_sound = pygame.mixer.Sound("die.wav")  # Suara ketika kalah
+# Memuat gambar latar belakang
+background_image = pygame.image.load("resources/background.png")
 
 # Kelas untuk burung
 class Bird:
     def __init__(self):
-        self.image = pygame.image.load("bird.png")  # Muat gambar burung
-        self.rect = self.image.get_rect(center=(50, HEIGHT // 2))  # Posisi awal burung
+        self.image = pygame.image.load("resources/bird.png")  # Gambar burung dari file
+        self.rect = self.image.get_rect(center=(50, HEIGHT // 2))
         self.velocity = 0
 
     def flap(self):
         self.velocity = FLAP_STRENGTH
-        jump_sound.play()  # Mainkan suara ketika melompat
 
     def move(self):
         self.velocity += GRAVITY
         self.rect.y += self.velocity
 
     def draw(self):
-        screen.blit(self.image, self.rect)  # Gambar burung menggunakan gambar
+        screen.blit(self.image, self.rect)  # Menggambar burung menggunakan gambar
 
-# Kelas untuk rintangan
+# Kelas untuk pipa
 class Pipe:
     def __init__(self):
         self.height = random.randint(150, 450)
-        self.top = pygame.Rect(WIDTH, 0, 50, self.height)
-        self.bottom = pygame.Rect(WIDTH, self.height + 150, 50, HEIGHT - self.height - 150)
+        self.width = 50
+        self.top = pygame.Rect(WIDTH, 0, self.width, self.height)
+        self.bottom = pygame.Rect(WIDTH, self.height + 150, self.width, HEIGHT - self.height - 150)
 
     def move(self):
         self.top.x -= 5
         self.bottom.x -= 5
 
     def draw(self):
-        pygame.draw.rect(screen, WHITE, self.top)
-        pygame.draw.rect(screen, BLACK, self.bottom)
+        # Menggambar pipa atas dengan warna kuning
+        pygame.draw.rect(screen, (255, 255, 0), self.top)  # Warna kuning
+        # Menggambar pipa bawah dengan warna kuning
+        pygame.draw.rect(screen, (255, 255, 0), self.bottom)  # Warna kuning
 
 # Fungsi utama
 def main():
@@ -74,8 +73,10 @@ def main():
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and not game_over:
-                    bird.flap()  # Melompat
+                    bird.flap()
+                    flap_sound.play()  # Memutar suara flap
                 if event.key == pygame.K_r and game_over:
+                    game_over_sound.play()  # Memutar suara game over
                     main()  # Restart game
 
         if not game_over:
@@ -90,29 +91,27 @@ def main():
                     score += 1  # Tambah skor saat melewati rintangan
 
                 if bird.rect.colliderect(pipe.top) or bird.rect.colliderect(pipe.bottom):
-                    nabrak_sound.play()  # Mainkan suara ketika nabrak
                     game_over = True
 
             # Cek jika burung jatuh
             if bird.rect.y > HEIGHT or bird.rect.y < 0:
-                die_sound.play()  # Mainkan suara ketika kalah
                 game_over = True
 
             # Menggambar
-            screen.blit(background_image, (0, 0))  # Gambar latar belakang
+            screen.blit(background_image, (0, 0))  # Menggambar latar belakang
             bird.draw()
             for pipe in pipes:
                 pipe.draw()
 
             # Tampilkan skor
             font = pygame.font.Font(None, 36)
-            text = font.render(f'Score: {score}', True, BLACK)
+            text = font.render(f'Score: {score}', True, (0, 0, 0))
             screen.blit(text, (10, 10))
 
         else:
             # Tampilkan pesan Game Over
             font = pygame.font.Font(None, 48)
-            text = font.render('Game Over! Press R to Restart', True, BLACK)
+            text = font.render('Game Over! Press R to Restart', True, (0, 0, 0))
             screen.blit(text, (50, HEIGHT // 2))
 
         pygame.display.flip()
